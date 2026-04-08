@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Five Gate Dashboard — Crypto Cowboy</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Barlow+Condensed:wght@300;400;600;700;800&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #11111a;
+    --surface2: #181825;
+    --border: #1e1e2e;
+    --green: #00ff88;
+    --red: #ff3355;
+    --yellow: #ffd700;
+    --orange: #ff8c00;
+    --blue: #4488ff;
+    --muted: #444460;
+    --text: #e0e0f0;
+    --text2: #8888aa;
+    --accent: #ffd700;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Barlow Condensed', sans-serif;
+    min-height: 100vh;
+    padding: 12px;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0 16px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 14px;
+  }
+
+  .brand { display: flex; flex-direction: column; }
+
+  .brand-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: 22px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  .brand-sub {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    color: var(--text2);
+    letter-spacing: 1px;
+    margin-top: 2px;
+  }
+
+  .header-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+  }
+
+  .refresh-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: all 0.2s;
+  }
+
+  .refresh-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .refresh-btn.spinning { color: var(--accent); border-color: var(--accent); }
+
+  .last-update {
+    font-family: 'Space Mono', monospace;
+    font-size: 8px;
+    color: var(--muted);
+  }
+
+  .price-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .price-left { display: flex; flex-direction: column; }
+
+  .price-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    color: var(--text2);
+    letter-spacing: 2px;
+    margin-bottom: 4px;
+  }
+
+  .price-value {
+    font-family: 'Space Mono', monospace;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1;
+  }
+
+  .price-change {
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    margin-top: 4px;
+  }
+
+  .price-change.up { color: var(--green); }
+  .price-change.down { color: var(--red); }
+
+  .verdict-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .verdict-circle {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border: 2px solid;
+    text-align: center;
+  }
+
+  .verdict-circle.no-trade { border-color: var(--red); color: var(--red); background: rgba(255,51,85,0.08); }
+  .verdict-circle.trade-ready { border-color: var(--green); color: var(--green); background: rgba(0,255,136,0.08); }
+  .verdict-circle.watching { border-color: var(--yellow); color: var(--yellow); background: rgba(255,215,0,0.08); }
+
+  .gates-open-count {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    color: var(--text2);
+  }
+
+  .section-header {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text2);
+    margin-bottom: 8px;
+    margin-top: 14px;
+    padding-left: 4px;
+  }
+
+  .gate-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    border-left: 3px solid var(--muted);
+    transition: border-color 0.3s;
+  }
+
+  .gate-card.open { border-left-color: var(--green); }
+  .gate-card.closed { border-left-color: var(--red); }
+  .gate-card.na { border-left-color: var(--muted); }
+
+  .gate-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+
+  .gate-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .gate-status-pill {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 3px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .gate-status-pill.open { background: rgba(0,255,136,0.12); color: var(--green); border: 1px solid rgba(0,255,136,0.3); }
+  .gate-status-pill.closed { background: rgba(255,51,85,0.12); color: var(--red); border: 1px solid rgba(255,51,85,0.3); }
+  .gate-status-pill.na { background: rgba(68,68,96,0.3); color: var(--muted); border: 1px solid var(--border); }
+
+  .gate-detail {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--text2);
+    line-height: 1.6;
+  }
+
+  .gate-detail .value { color: var(--text); font-weight: 700; }
+  .gate-detail .highlight { color: var(--accent); }
+  .gate-detail .good { color: var(--green); }
+  .gate-detail .bad { color: var(--red); }
+
+  .stoch-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .stoch-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+  }
+
+  .stoch-tf {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    color: var(--text2);
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+  }
+
+  .stoch-values { display: flex; flex-direction: column; gap: 4px; }
+
+  .stoch-row { display: flex; justify-content: space-between; align-items: center; }
+
+  .stoch-label { font-family: 'Barlow Condensed', sans-serif; font-size: 13px; color: var(--text2); }
+
+  .stoch-val { font-family: 'Space Mono', monospace; font-size: 13px; font-weight: 700; }
+  .stoch-val.k { color: #4488ff; }
+  .stoch-val.d { color: var(--orange); }
+
+  .stoch-bar-wrap { margin-top: 8px; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .stoch-bar { height: 100%; border-radius: 2px; transition: width 0.5s; }
+
+  .stoch-cross-status {
+    font-family: 'Space Mono', monospace;
+    font-size: 8px;
+    margin-top: 6px;
+    padding: 3px 6px;
+    border-radius: 3px;
+    text-align: center;
+  }
+
+  .stoch-cross-status.bullish { background: rgba(0,255,136,0.1); color: var(--green); }
+  .stoch-cross-status.bearish { background: rgba(255,51,85,0.1); color: var(--red); }
+  .stoch-cross-status.neutral { background: rgba(68,68,96,0.2); color: var(--muted); }
+
+  .ma-grid {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+  }
+
+  .ma-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--border);
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+  }
+
+  .ma-row:last-child { border-bottom: none; }
+  .ma-name { color: var(--text2); }
+  .ma-val { color: var(--text); font-weight: 700; }
+  .ma-dist { font-size: 9px; }
+  .ma-dist.above { color: var(--green); }
+  .ma-dist.below { color: var(--red); }
+
+  .levels-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+  }
+
+  .level-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+  }
+
+  .level-row:last-child { border-bottom: none; }
+  .level-label { color: var(--text2); font-size: 9px; letter-spacing: 1px; }
+  .level-price { color: var(--accent); font-weight: 700; font-size: 12px; }
+  .level-type { font-size: 8px; padding: 2px 6px; border-radius: 2px; }
+  .level-type.support { background: rgba(0,255,136,0.1); color: var(--green); }
+  .level-type.resistance { background: rgba(255,51,85,0.1); color: var(--red); }
+  .level-type.target { background: rgba(68,136,255,0.1); color: var(--blue); }
+
+  .countdown-bar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .countdown-label { font-family: 'Space Mono', monospace; font-size: 9px; color: var(--text2); letter-spacing: 1px; }
+  .countdown-timer { font-family: 'Space Mono', monospace; font-size: 13px; font-weight: 700; color: var(--accent); }
+
+  .countdown-progress {
+    flex: 1;
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 0 12px;
+    overflow: hidden;
+  }
+
+  .countdown-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 1s linear; }
+
+  .loading-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(10,10,15,0.8);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .loading-overlay.active { display: flex; }
+
+  .loading-spinner {
+    width: 36px;
+    height: 36px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  .loading-text { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--text2); letter-spacing: 2px; }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .error-msg {
+    background: rgba(255,51,85,0.08);
+    border: 1px solid rgba(255,51,85,0.2);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--red);
+    margin-bottom: 12px;
+    display: none;
+  }
+
+  .error-msg.active { display: block; }
+
+  .footer {
+    text-align: center;
+    padding: 16px 0 8px;
+    font-family: 'Space Mono', monospace;
+    font-size: 8px;
+    color: var(--muted);
+    letter-spacing: 2px;
+  }
+
+  .live-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    display: inline-block;
+    margin-right: 5px;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">PULLING GATE DATA...</div>
+</div>
+
+<div class="header">
+  <div class="brand">
+    <div class="brand-name">🤠 Five Gate</div>
+    <div class="brand-sub"><span class="live-dot"></span>LIVE DASHBOARD — BTC/USDT</div>
+  </div>
+  <div class="header-right">
+    <button class="refresh-btn" id="refreshBtn" onclick="fetchData()">⟳ REFRESH</button>
+    <div class="last-update" id="lastUpdate">—</div>
+  </div>
+</div>
+
+<div class="error-msg" id="errorMsg"></div>
+
+<div class="price-block">
+  <div class="price-left">
+    <div class="price-label">BTCUSDT PERP</div>
+    <div class="price-value" id="priceValue">—</div>
+    <div class="price-change" id="priceChange">—</div>
+  </div>
+  <div class="verdict-badge">
+    <div class="verdict-circle no-trade" id="verdictCircle">NO<br>TRADE</div>
+    <div class="gates-open-count" id="gatesOpenCount">0/7 GATES</div>
+  </div>
+</div>
+
+<div class="countdown-bar">
+  <div class="countdown-label">NEXT REFRESH</div>
+  <div class="countdown-progress"><div class="countdown-fill" id="countdownFill" style="width:100%"></div></div>
+  <div class="countdown-timer" id="countdownTimer">15:00</div>
+</div>
+
+<div class="section-header">Seven Gate Checklist</div>
+
+<div class="gate-card" id="gate1Card">
+  <div class="gate-top">
+    <div class="gate-name">Gate 1 — Daily Bias</div>
+    <div class="gate-status-pill na" id="gate1Pill">—</div>
+  </div>
+  <div class="gate-detail" id="gate1Detail">Loading...</div>
+</div>
+
+<div class="gate-card" id="gate2Card">
+  <div class="gate-top">
+    <div class="gate-name">Gate 2 — The Level</div>
+    <div class="gate-status-pill na" id="gate2Pill">—</div>
+  </div>
+  <div class="gate-detail" id="gate2Detail">Loading...</div>
+</div>
+
+<div class="gate-card" id="gate2bCard">
+  <div class="gate-top">
+    <div class="gate-name">Gate 2b — Price AT Level</div>
+    <div class="gate-status-pill na" id="gate2bPill">—</div>
+  </div>
+  <div class="gate-detail" id="gate2bDetail">Loading...</div>
+</div>
+
+<div class="gate-card" id="gate3Card">
+  <div class="gate-top">
+    <div class="gate-name">Gate 3 — Candle Closed</div>
+    <div class="gate-status-pill na" id="gate3Pill">MANUAL</div>
+  </div>
+  <div class="gate-detail" id="gate3Detail">1H candle must be CLOSED — not mid-candle. Manual check required on your chart.</div>
+</div>
+
+<div class="gate-card na" id="gate4Card">
+  <div class="gate-top">
+    <div class="gate-name">Gate 4 — Risk & Size</div>
+    <div class="gate-status-pill na" id="gate4Pill">MANUAL</div>
+  </div>
+  <div class="gate-detail" id="gate4Detail">Max 2% risk. Stop above full cluster + buffer. Verify liquidation price outside stop.</div>
+</div>
+
+<div class="gate-card na" id="gate5Card">
+  <div class="gate-top">
+    <div class="gate-name">Gate 5 — R:R Ratio</div>
+    <div class="gate-status-pill na" id="gate5Pill">MANUAL</div>
+  </div>
+  <div class="gate-detail" id="gate5Detail">Minimum 2:1 required. Confirm with actual TP and SL numbers.</div>
+</div>
+
+<div class="gate-card" id="gate7Card">
+  <div class="gate-top">
+    <div class="gate-name">Gate 7 — Stoch RSI</div>
+    <div class="gate-status-pill na" id="gate7Pill">—</div>
+  </div>
+  <div class="gate-detail" id="gate7Detail">Loading...</div>
+</div>
+
+<div class="section-header">Stoch RSI Live Readings</div>
+<div class="stoch-grid">
+  <div class="stoch-card">
+    <div class="stoch-tf">4H TIMEFRAME</div>
+    <div class="stoch-values">
+      <div class="stoch-row"><span class="stoch-label">K (Blue)</span><span class="stoch-val k" id="stoch4hK">—</span></div>
+      <div class="stoch-row"><span class="stoch-label">D (Orange)</span><span class="stoch-val d" id="stoch4hD">—</span></div>
+    </div>
+    <div class="stoch-bar-wrap"><div class="stoch-bar" id="stoch4hBar" style="width:0%;background:#4488ff"></div></div>
+    <div class="stoch-cross-status neutral" id="stoch4hStatus">—</div>
+  </div>
+  <div class="stoch-card">
+    <div class="stoch-tf">1H TIMEFRAME</div>
+    <div class="stoch-values">
+      <div class="stoch-row"><span class="stoch-label">K (Blue)</span><span class="stoch-val k" id="stoch1hK">—</span></div>
+      <div class="stoch-row"><span class="stoch-label">D (Orange)</span><span class="stoch-val d" id="stoch1hD">—</span></div>
+    </div>
+    <div class="stoch-bar-wrap"><div class="stoch-bar" id="stoch1hBar" style="width:0%;background:#4488ff"></div></div>
+    <div class="stoch-cross-status neutral" id="stoch1hStatus">—</div>
+  </div>
+</div>
+
+<div class="section-header">4H MA Cluster (Gate 2 Anchor)</div>
+<div class="ma-grid" id="maGrid">
+  <div class="ma-row"><span class="ma-name">Loading...</span></div>
+</div>
+
+<div class="section-header">Key Levels to Watch</div>
+<div class="levels-block">
+  <div class="level-row">
+    <span class="level-label">GATE 2 ZONE TOP</span>
+    <span class="level-price">$69,600</span>
+    <span class="level-type resistance">RESISTANCE</span>
+  </div>
+  <div class="level-row">
+    <span class="level-label">GATE 2 ZONE BTM</span>
+    <span class="level-price">$68,500</span>
+    <span class="level-type support">SUPPORT</span>
+  </div>
+  <div class="level-row">
+    <span class="level-label">1H GOLDEN ZONE BTM</span>
+    <span class="level-price">$71,789</span>
+    <span class="level-type resistance">RESISTANCE</span>
+  </div>
+  <div class="level-row">
+    <span class="level-label">SHORT ENTRY ZONE</span>
+    <span class="level-price">$72,000</span>
+    <span class="level-type resistance">RESISTANCE</span>
+  </div>
+  <div class="level-row">
+    <span class="level-label">4H RETRACEMENT BTM</span>
+    <span class="level-price">$65,212</span>
+    <span class="level-type target">TARGET</span>
+  </div>
+  <div class="level-row">
+    <span class="level-label">H&S TARGET</span>
+    <span class="level-price">$34,178</span>
+    <span class="level-type target">MACRO TARGET</span>
+  </div>
+</div>
+
+<div class="footer">CRYPTO COWBOY — FIVE GATE SYSTEM — NOT FINANCIAL ADVICE</div>
+
+<script>
+const REFRESH_INTERVAL = 15 * 60;
+const GATE2_TOP = 69600;
+const GATE2_BTM = 68500;
+const GATE2_TOLERANCE = 0.02;
+let countdown = REFRESH_INTERVAL;
+let countdownInterval = null;
+
+async function fetchPrice() {
+  const res = await fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT');
+  const data = await res.json();
+  return { price: parseFloat(data.lastPrice), change: parseFloat(data.priceChangePercent) };
+}
+
+async function fetchStochRSI() {
+  const body = {
+    symbols: { tickers: ["BYBIT:BTCUSDT.P"], query: { types: [] } },
+    columns: [
+      "Stoch.RSI.K|240","Stoch.RSI.D|240","Stoch.RSI.K|60","Stoch.RSI.D|60",
+      "EMA20|240","EMA50|240","EMA100|240","EMA200|240","SMA20|240","SMA50|240",
+      "close|1D","EMA20|1D","EMA50|1D","EMA100|1D","EMA200|1D","SMA20|1D","SMA50|1D","SMA100|1D","SMA200|1D"
+    ]
+  };
+  const res = await fetch('https://scanner.tradingview.com/crypto/scan', {
+    method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)
+  });
+  const data = await res.json();
+  const d = data.data[0].d;
+  return {
+    stoch4hK:d[0],stoch4hD:d[1],stoch1hK:d[2],stoch1hD:d[3],
+    ema20_4h:d[4],ema50_4h:d[5],ema100_4h:d[6],ema200_4h:d[7],sma20_4h:d[8],sma50_4h:d[9],
+    dailyClose:d[10],ema20_d:d[11],ema50_d:d[12],ema100_d:d[13],ema200_d:d[14],
+    sma20_d:d[15],sma50_d:d[16],sma100_d:d[17],sma200_d:d[18]
+  };
+}
+
+function evaluateGates(price, tv) {
+  const dailyAbove = [tv.ema20_d,tv.ema50_d,tv.sma20_d,tv.sma50_d].filter(ma=>price>ma).length;
+  const dailyBelow = [tv.ema100_d,tv.ema200_d,tv.sma100_d,tv.sma200_d].filter(ma=>price<ma).length;
+  const gate1Open = dailyAbove===4||dailyBelow===4;
+  const dailyBias = dailyAbove>=6?'BULLISH':dailyBelow>=6?'BEARISH':'MIXED';
+  const maClusterMid=(GATE2_TOP+GATE2_BTM)/2;
+  const distFromCluster=Math.abs(price-maClusterMid)/maClusterMid;
+  const gate2Open=distFromCluster<=GATE2_TOLERANCE;
+  const gate2bOpen=price>=GATE2_BTM&&price<=GATE2_TOP;
+  const k4h=tv.stoch4hK,d4h=tv.stoch4hD,k1h=tv.stoch1hK,d1h=tv.stoch1hD;
+  const maxedOversold4h=k4h<20&&d4h<20&&k4h>d4h;
+  const maxedOversold1h=k1h<20&&d1h<20&&k1h>d1h;
+  const maxedOverbought4h=k4h>80&&d4h>80&&k4h<d4h;
+  const maxedOverbought1h=k1h>80&&d1h>80&&k1h<d1h;
+  const gate7Open=(maxedOversold4h&&maxedOversold1h)||(maxedOverbought4h&&maxedOverbought1h);
+  return {
+    gate1:{open:gate1Open,bias:dailyBias,aboveCount:dailyAbove},
+    gate2:{open:gate2Open,distPct:(distFromCluster*100).toFixed(1)},
+    gate2b:{open:gate2bOpen},
+    gate7:{open:gate7Open,longReady:maxedOversold4h&&maxedOversold1h,shortReady:maxedOverbought4h&&maxedOverbought1h,k4h,d4h,k1h,d1h}
+  };
+}
+
+function setGate(id,isOpen,detail,isManual=false){
+  const card=document.getElementById(id+'Card');
+  const pill=document.getElementById(id+'Pill');
+  if(isManual){card.className='gate-card na';pill.className='gate-status-pill na';pill.textContent='MANUAL';return;}
+  card.className='gate-card '+(isOpen?'open':'closed');
+  pill.className='gate-status-pill '+(isOpen?'open':'closed');
+  pill.textContent=isOpen?'OPEN':'CLOSED';
+  document.getElementById(id+'Detail').innerHTML=detail;
+}
+
+function updateUI(price,priceData,tv,gates){
+  document.getElementById('priceValue').textContent='$'+price.toLocaleString('en-US',{minimumFractionDigits:1,maximumFractionDigits:1});
+  const changeEl=document.getElementById('priceChange');
+  const chg=priceData.change;
+  changeEl.textContent=(chg>=0?'▲':'▼')+' '+Math.abs(chg).toFixed(2)+'%';
+  changeEl.className='price-change '+(chg>=0?'up':'down');
+  const autoOpen=[gates.gate1.open,gates.gate2.open,gates.gate2b.open,gates.gate7.open].filter(Boolean).length;
+  document.getElementById('gatesOpenCount').textContent=autoOpen+'/4 AUTO GATES';
+  const verdictEl=document.getElementById('verdictCircle');
+  if(autoOpen===4){verdictEl.className='verdict-circle watching';verdictEl.innerHTML='CHECK<br>MANUAL';}
+  else if(autoOpen>=2){verdictEl.className='verdict-circle watching';verdictEl.innerHTML='WATCH<br>SETUP';}
+  else{verdictEl.className='verdict-circle no-trade';verdictEl.innerHTML='NO<br>TRADE';}
+
+  setGate('gate1',gates.gate1.open,
+    `Bias: <span class="value ${gates.gate1.bias==='BULLISH'?'good':gates.gate1.bias==='BEARISH'?'bad':''}">${gates.gate1.bias}</span><br>`+
+    `Price above ${gates.gate1.aboveCount}/4 short daily MAs<br>`+
+    `<span class="${gates.gate1.open?'good':'bad'}">${gates.gate1.open?'✓ Clean directional bias':'✗ Mixed MA structure — Gate 1 CLOSED'}</span>`
+  );
+
+  const aboveCluster=price>GATE2_TOP;
+  setGate('gate2',gates.gate2.open,
+    `4H MA Cluster: <span class="highlight">$${GATE2_BTM.toLocaleString()} – $${GATE2_TOP.toLocaleString()}</span><br>`+
+    `Distance from cluster: <span class="${gates.gate2.open?'good':'bad'}">${gates.gate2.distPct}% ${aboveCluster?'ABOVE':'BELOW'}</span><br>`+
+    `<span class="${gates.gate2.open?'good':'bad'}">${gates.gate2.open?'✓ Within 2% — Gate 2 OPEN':'✗ More than 2% from cluster — Gate 2 CLOSED'}</span>`
+  );
+
+  setGate('gate2b',gates.gate2b.open,
+    `Zone: <span class="highlight">$${GATE2_BTM.toLocaleString()} – $${GATE2_TOP.toLocaleString()}</span><br>`+
+    `Current: <span class="value">$${price.toLocaleString('en-US',{maximumFractionDigits:0})}</span><br>`+
+    `<span class="${gates.gate2b.open?'good':'bad'}">${gates.gate2b.open?'✓ Price AT the level':'✗ Price not at level yet'}</span>`
+  );
+
+  const g7=gates.gate7;
+  const stochStatus=g7.longReady?'✓ LONG SIGNAL — Both TFs maxed oversold + K crossed D':
+    g7.shortReady?'✓ SHORT SIGNAL — Both TFs maxed overbought + K crossed D':
+    '✗ Not confirmed — Gate 7 CLOSED';
+  setGate('gate7',g7.open,
+    `4H: K=<span class="value">${g7.k4h?.toFixed(1)??'—'}</span> D=<span class="value">${g7.d4h?.toFixed(1)??'—'}</span><br>`+
+    `1H: K=<span class="value">${g7.k1h?.toFixed(1)??'—'}</span> D=<span class="value">${g7.d1h?.toFixed(1)??'—'}</span><br>`+
+    `<span class="${g7.open?'good':'bad'}">${stochStatus}</span>`
+  );
+
+  document.getElementById('stoch4hK').textContent=g7.k4h?.toFixed(2)??'—';
+  document.getElementById('stoch4hD').textContent=g7.d4h?.toFixed(2)??'—';
+  document.getElementById('stoch1hK').textContent=g7.k1h?.toFixed(2)??'—';
+  document.getElementById('stoch1hD').textContent=g7.d1h?.toFixed(2)??'—';
+  document.getElementById('stoch4hBar').style.width=(g7.k4h??0)+'%';
+  document.getElementById('stoch1hBar').style.width=(g7.k1h??0)+'%';
+
+  const setStatus=(k,d,el)=>{
+    let label,cls;
+    if(k>80&&d>80){label='OVERBOUGHT · '+(k<d?'K<D':'K>D');cls=k<d?'bearish':'bullish';}
+    else if(k<20&&d<20){label='OVERSOLD · '+(k>d?'K>D':'K<D');cls=k>d?'bullish':'bearish';}
+    else{label='NEUTRAL · '+(k>d?'K>D':'K<D');cls='neutral';}
+    el.textContent=label;el.className='stoch-cross-status '+cls;
+  };
+  setStatus(g7.k4h,g7.d4h,document.getElementById('stoch4hStatus'));
+  setStatus(g7.k1h,g7.d1h,document.getElementById('stoch1hStatus'));
+
+  const mas=[
+    {name:'EMA20 4H',val:tv.ema20_4h},{name:'EMA50 4H',val:tv.ema50_4h},
+    {name:'EMA100 4H',val:tv.ema100_4h},{name:'EMA200 4H',val:tv.ema200_4h},
+    {name:'SMA20 4H',val:tv.sma20_4h},{name:'SMA50 4H',val:tv.sma50_4h}
+  ].filter(m=>m.val);
+
+  document.getElementById('maGrid').innerHTML=mas.map(m=>{
+    const dist=((price-m.val)/m.val*100);
+    return`<div class="ma-row"><span class="ma-name">${m.name}</span><span class="ma-val">$${Math.round(m.val).toLocaleString()}</span><span class="ma-dist ${dist>=0?'above':'below'}">${dist>=0?'+':''}${dist.toFixed(1)}%</span></div>`;
+  }).join('');
+
+  document.getElementById('lastUpdate').textContent='Updated '+new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+}
+
+async function fetchData(){
+  const loading=document.getElementById('loadingOverlay');
+  const errorMsg=document.getElementById('errorMsg');
+  const btn=document.getElementById('refreshBtn');
+  loading.classList.add('active');
+  btn.classList.add('spinning');
+  btn.textContent='⟳ LOADING';
+  errorMsg.classList.remove('active');
+  try{
+    const [priceData,tvData]=await Promise.all([fetchPrice(),fetchStochRSI()]);
+    const gates=evaluateGates(priceData.price,tvData);
+    updateUI(priceData.price,priceData,tvData,gates);
+    resetCountdown();
+  }catch(err){
+    errorMsg.textContent='⚠ Failed to fetch data — check connection. '+err.message;
+    errorMsg.classList.add('active');
+  }finally{
+    loading.classList.remove('active');
+    btn.classList.remove('spinning');
+    btn.textContent='⟳ REFRESH';
+  }
+}
+
+function resetCountdown(){
+  countdown=REFRESH_INTERVAL;
+  if(countdownInterval)clearInterval(countdownInterval);
+  countdownInterval=setInterval(()=>{
+    countdown--;
+    if(countdown<=0){clearInterval(countdownInterval);fetchData();return;}
+    const m=Math.floor(countdown/60),s=countdown%60;
+    document.getElementById('countdownTimer').textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+    document.getElementById('countdownFill').style.width=(countdown/REFRESH_INTERVAL*100)+'%';
+  },1000);
+}
+
+fetchData();
+</script>
+</body>
+</html>
